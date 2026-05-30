@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:fritou/data/recipes_data.dart';
 
 class RecipeDetailSheet extends StatelessWidget {
   final Recipe recipe;
+
+  static const MethodChannel _channel = MethodChannel('com.example.fritou/timer');
 
   const RecipeDetailSheet({
     super.key,
@@ -29,6 +32,40 @@ class RecipeDetailSheet extends StatelessWidget {
         );
       },
     );
+  }
+
+  Future<void> _startNativeTimer(String label, int seconds, BuildContext context) async {
+    try {
+      debugPrint('Attempting to start native timer for "$label" with $seconds seconds...');
+      final success = await _channel.invokeMethod<bool>('startTimer', {
+        'seconds': seconds,
+        'message': label,
+      });
+      debugPrint('Method channel response: $success');
+      if (success == true) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('⏱️ Minuteur "$label" lancé sur Android !'),
+              backgroundColor: const Color(0xFFFF7043),
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Error starting native timer: $e');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur minuteur : $e'),
+            backgroundColor: Colors.redAccent,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -172,9 +209,12 @@ class RecipeDetailSheet extends StatelessWidget {
             const SizedBox(height: 12),
             ...recipe.steps.asMap().entries.map((entry) {
               final idx = entry.key + 1;
+              final stepIndex = entry.key;
               final stepText = entry.value;
+              final stepTimers = recipe.timers.where((t) => t.stepIndex == stepIndex).toList();
+
               return Padding(
-                padding: const EdgeInsets.only(bottom: 16.0),
+                padding: const EdgeInsets.only(bottom: 20.0),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -198,13 +238,69 @@ class RecipeDetailSheet extends StatelessWidget {
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: Text(
-                        stepText,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          height: 1.5,
-                          color: Colors.white70,
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            stepText,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              height: 1.5,
+                              color: Colors.white70,
+                            ),
+                          ),
+                          if (stepTimers.isNotEmpty) ...[
+                            const SizedBox(height: 10),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: stepTimers.map((timer) {
+                                final minutes = timer.durationSeconds ~/ 60;
+                                final remainingSeconds = timer.durationSeconds % 60;
+                                final timeStr = remainingSeconds > 0 ? '$minutes min $remainingSeconds s' : '$minutes min';
+
+                                return InkWell(
+                                  onTap: () => _startNativeTimer(
+                                    timer.label,
+                                    timer.durationSeconds,
+                                    context,
+                                  ),
+                                  borderRadius: BorderRadius.circular(10),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFFF7043).withOpacity(0.12),
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                        color: const Color(0xFFFF7043).withOpacity(0.3),
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(
+                                          Icons.alarm_on_rounded,
+                                          size: 14,
+                                          color: Color(0xFFFFB74D),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          'Lancer Minuteur ($timeStr)',
+                                          style: const TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.bold,
+                                            color: Color(0xFFFFB74D),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ],
+                        ],
                       ),
                     ),
                   ],

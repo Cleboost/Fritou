@@ -1,5 +1,17 @@
 import 'package:flutter/material.dart';
 
+class RecipeTimer {
+  final String label;
+  final int durationSeconds;
+  final int? stepIndex;
+
+  const RecipeTimer({
+    required this.label,
+    required this.durationSeconds,
+    this.stepIndex,
+  });
+}
+
 class Recipe {
   final String title;
   final String subtitle;
@@ -11,6 +23,7 @@ class Recipe {
   final List<String> ingredients;
   final List<String> steps;
   final String tip;
+  final List<RecipeTimer> timers;
 
   const Recipe({
     required this.title,
@@ -23,6 +36,7 @@ class Recipe {
     required this.ingredients,
     required this.steps,
     required this.tip,
+    required this.timers,
   });
 }
 
@@ -48,6 +62,11 @@ const List<Recipe> staticRecipes = [
       'Égouttez, salez généreusement dans un grand saladier et dégustez immédiatement !',
     ],
     tip: 'Ne surchargez jamais le panier de la friteuse pour éviter que la température de l\'huile ne chute !',
+    timers: [
+      RecipeTimer(label: 'Première cuisson', durationSeconds: 360, stepIndex: 2),
+      RecipeTimer(label: 'Repos des frites', durationSeconds: 1800, stepIndex: 2),
+      RecipeTimer(label: 'Deuxième cuisson', durationSeconds: 120, stepIndex: 3),
+    ],
   ),
   Recipe(
     title: 'Churros Croustillants',
@@ -74,6 +93,9 @@ const List<Recipe> staticRecipes = [
       'Laissez frire 3 à 4 minutes jusqu\'à ce qu\'ils soient bien dorés. Égouttez et roulez immédiatement dans le mélange sucre-cannelle.',
     ],
     tip: 'Utilisez une douille étoilée ! Les rayures permettent aux churros de gonfler régulièrement sans éclater dans l\'huile.',
+    timers: [
+      RecipeTimer(label: 'Cuisson Churros', durationSeconds: 180, stepIndex: 5),
+    ],
   ),
   Recipe(
     title: 'Beignets de Fête Moelleux',
@@ -101,6 +123,12 @@ const List<Recipe> staticRecipes = [
       'Égouttez, passez dans le sucre et garnissez de confiture ou pâte à tartiner avec une seringue.',
     ],
     tip: 'L\'huile ne doit pas être trop chaude (pas plus de 170°C) pour que l\'intérieur cuise bien sans brûler l\'extérieur.',
+    timers: [
+      RecipeTimer(label: 'Repos levure', durationSeconds: 600, stepIndex: 0),
+      RecipeTimer(label: 'Première levée', durationSeconds: 5400, stepIndex: 2),
+      RecipeTimer(label: 'Deuxième levée', durationSeconds: 1800, stepIndex: 3),
+      RecipeTimer(label: 'Cuisson Beignets', durationSeconds: 120, stepIndex: 4),
+    ],
   ),
   Recipe(
     title: 'Calamars Frits à la Romaine',
@@ -127,5 +155,8 @@ const List<Recipe> staticRecipes = [
       'Servez chaud parsemé de fleur de sel et arrosé de jus de citron pressé.',
     ],
     tip: 'La levure chimique dans la farine apporte un côté ultra croustillant et léger à la friture !',
+    timers: [
+      RecipeTimer(label: 'Friture Calamars', durationSeconds: 90, stepIndex: 4),
+    ],
   ),
 ];
