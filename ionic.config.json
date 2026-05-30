@@ -1,8 +1,0 @@
-{
-  "name": "Friteuse Manager",
-  "integrations": {
-    "capacitor": {}
-  },
-  "type": "vue-vite",
-  "id": "b43a6978"
-}
