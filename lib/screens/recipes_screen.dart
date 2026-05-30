@@ -9,7 +9,13 @@ class RecipesScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: const Icon(Icons.menu_book_rounded, color: Color(0xFFFFB74D)),
+        leading: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Image.asset(
+            'assets/images/logo.png',
+            fit: BoxFit.contain,
+          ),
+        ),
         title: const Text('RECETTES SECRÈTES'),
       ),
       body: ListView.builder(

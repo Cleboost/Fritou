@@ -44,7 +44,13 @@ class FryerScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        leading: const Icon(Icons.local_fire_department, color: Color(0xFFFFB74D)),
+        leading: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Image.asset(
+            'assets/images/logo.png',
+            fit: BoxFit.contain,
+          ),
+        ),
         title: const Text('FRITOU'),
         actions: [
           if (bathCount > 0)
