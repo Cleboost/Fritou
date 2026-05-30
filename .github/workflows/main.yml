@@ -54,7 +54,7 @@ jobs:
           path: artifacts
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v3
         with:
           files: artifacts/app-release.apk
           name: Release ${{ github.ref_name }}
