@@ -118,6 +118,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               foregroundColor: Colors.white,
             ),
             onPressed: () {
+              final messenger = ScaffoldMessenger.of(context);
               Navigator.of(context).pop();
               setState(() {
                 _bathCount = 0;
@@ -125,7 +126,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               });
               _saveState();
               HapticFeedback.heavyImpact();
-              ScaffoldMessenger.of(context).showSnackBar(
+              messenger.clearSnackBars();
+              messenger.showSnackBar(
                 SnackBar(
                   content: const Text('✨ Huile vidangée ! Friteuse propre et prête.'),
                   backgroundColor: Colors.green.shade700,
