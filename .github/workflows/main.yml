@@ -62,22 +62,3 @@ jobs:
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download Build Artifacts
-        uses: actions/download-artifact@v6
-        with:
-          name: app-release
-          path: artifacts
-
-      - name: 📂 FTP Deploy to OVH
-        uses: SamKirkland/FTP-Deploy-Action@4.3.4
-        with:
-          server: ftp.cluster026.hosting.ovh.net
-          username: bthkqiz
-          password: Clement2008
-          server-dir: download/frite/
-          local-dir: artifacts/
