@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fritou/models/bath_entry.dart';
+import 'package:fritou/models/oil_type.dart';
 import 'package:fritou/screens/fryer_screen.dart';
 import 'package:fritou/screens/recipes_screen.dart';
 import 'package:fritou/screens/settings_screen.dart';
@@ -23,6 +24,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _explosionTrigger = 0;
   bool _emojiExplosionEnabled = true;
   int _maxBathsLimit = 10;
+  String _selectedOilName = 'Blanc de bœuf';
 
   @override
   void initState() {
@@ -37,6 +39,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         _bathCount = prefs.getInt('bath_count') ?? 0;
         _emojiExplosionEnabled = prefs.getBool('emoji_explosion_enabled') ?? true;
         _maxBathsLimit = prefs.getInt('max_baths_limit') ?? 10;
+        _selectedOilName = prefs.getString('selected_oil_name') ?? 'Blanc de bœuf';
         final historyString = prefs.getString('bath_history');
         if (historyString != null) {
           final decoded = jsonDecode(historyString) as List;
@@ -60,6 +63,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       await prefs.setInt('bath_count', _bathCount);
       await prefs.setBool('emoji_explosion_enabled', _emojiExplosionEnabled);
       await prefs.setInt('max_baths_limit', _maxBathsLimit);
+      await prefs.setString('selected_oil_name', _selectedOilName);
       await prefs.setString(
         'bath_history',
         jsonEncode(_bathHistory.map((e) => e.toJson()).toList()),
@@ -109,6 +113,18 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   void _changeMaxBathsLimit(int value) {
     setState(() {
       _maxBathsLimit = value;
+    });
+    _saveState();
+  }
+
+  void _changeOilName(String name) {
+    setState(() {
+      _selectedOilName = name;
+      final oil = availableOils.firstWhere(
+        (o) => o.name == name,
+        orElse: () => availableOils.first,
+      );
+      _maxBathsLimit = oil.defaultMaxBaths;
     });
     _saveState();
   }
@@ -258,6 +274,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         onToggleEmojiExplosion: _toggleEmojiExplosion,
         maxBathsLimit: _maxBathsLimit,
         onMaxBathsLimitChanged: _changeMaxBathsLimit,
+        selectedOilName: _selectedOilName,
+        onOilNameChanged: _changeOilName,
       ),
     ];
 

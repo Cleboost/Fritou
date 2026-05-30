@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:fritou/models/oil_type.dart';
 
 class SettingsScreen extends StatelessWidget {
   final bool emojiExplosionEnabled;
   final ValueChanged<bool> onToggleEmojiExplosion;
   final int maxBathsLimit;
   final ValueChanged<int> onMaxBathsLimitChanged;
+  final String selectedOilName;
+  final ValueChanged<String> onOilNameChanged;
 
   const SettingsScreen({
     super.key,
@@ -12,6 +15,8 @@ class SettingsScreen extends StatelessWidget {
     required this.onToggleEmojiExplosion,
     required this.maxBathsLimit,
     required this.onMaxBathsLimitChanged,
+    required this.selectedOilName,
+    required this.onOilNameChanged,
   });
 
   @override
@@ -82,7 +87,81 @@ class SettingsScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 25),
-            // Category Section Title 1
+            // Category Section Title 1: Oil Type Selection
+            Padding(
+              padding: const EdgeInsets.only(left: 8.0, bottom: 8.0),
+              child: Text(
+                'TYPE D\'HUILE UTILISÉ',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFFFFB74D).withOpacity(0.8),
+                  letterSpacing: 1.5,
+                ),
+              ),
+            ),
+            // Oil Selector Card containing RadioListTiles
+            Card(
+              color: const Color(0xFF1E1C1F),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: Column(
+                  children: availableOils.map((oil) {
+                    final bool isSelected = oil.name == selectedOilName;
+                    return Container(
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(
+                            color: Colors.white.withOpacity(0.03),
+                            width: 1,
+                          ),
+                        ),
+                      ),
+                      child: RadioListTile<String>(
+                        value: oil.name,
+                        groupValue: selectedOilName,
+                        onChanged: (value) {
+                          if (value != null) {
+                            onOilNameChanged(value);
+                          }
+                        },
+                        activeColor: const Color(0xFFFFB74D),
+                        title: Row(
+                          children: [
+                            Text(
+                              oil.icon,
+                              style: const TextStyle(fontSize: 20),
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              oil.name,
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                                color: isSelected ? const Color(0xFFFFB74D) : Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                        subtitle: Padding(
+                          padding: const EdgeInsets.only(top: 4.0),
+                          child: Text(
+                            oil.description,
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.white.withOpacity(0.5),
+                              height: 1.3,
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ),
+            const SizedBox(height: 25),
+            // Category Section Title 2: Safety & Limit
             Padding(
               padding: const EdgeInsets.only(left: 8.0, bottom: 8.0),
               child: Text(
@@ -95,7 +174,7 @@ class SettingsScreen extends StatelessWidget {
                 ),
               ),
             ),
-            // Oil Settings Card
+            // Oil Settings Card (Max Baths Slider)
             Card(
               color: const Color(0xFF1E1C1F),
               child: Padding(
@@ -130,7 +209,7 @@ class SettingsScreen extends StatelessWidget {
                                 ),
                               ),
                               Text(
-                                'Alerte de vidange recommandée après X bains (recommandé : 10 max).',
+                                'Nombre de bains tolérés avant de forcer la vidange.',
                                 style: TextStyle(
                                   fontSize: 11,
                                   color: Colors.white.withOpacity(0.5),
@@ -207,7 +286,7 @@ class SettingsScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 25),
-            // Category Section Title 2
+            // Category Section Title 3: Customization
             Padding(
               padding: const EdgeInsets.only(left: 8.0, bottom: 8.0),
               child: Text(
@@ -220,7 +299,7 @@ class SettingsScreen extends StatelessWidget {
                 ),
               ),
             ),
-            // Settings List Card
+            // Settings List Card (Animations Toggle)
             Card(
               color: const Color(0xFF1E1C1F),
               child: ClipRRect(
