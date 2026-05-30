@@ -1,0 +1,13 @@
+version: 2
+updates:
+  # Vérifications et mises à jour pour les GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+
+  # Vérifications et mises à jour pour les packages Dart (pubspec.yaml)
+  - package-ecosystem: "pub"
+    directory: "/"
+    schedule:
+      interval: "weekly"
