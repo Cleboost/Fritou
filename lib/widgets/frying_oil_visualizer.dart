@@ -4,11 +4,13 @@ import 'package:flutter/material.dart';
 class FryingOilVisualizer extends StatefulWidget {
   final int bathCount;
   final Color oilColor;
+  final int maxBathsLimit;
 
   const FryingOilVisualizer({
     super.key,
     required this.bathCount,
     required this.oilColor,
+    required this.maxBathsLimit,
   });
 
   @override
@@ -36,8 +38,8 @@ class _FryingOilVisualizerState extends State<FryingOilVisualizer>
 
   @override
   Widget build(BuildContext context) {
-    final bool isToxic = widget.bathCount >= 10;
-    final bool isWarning = widget.bathCount >= 8 && widget.bathCount < 10;
+    final bool isToxic = widget.bathCount >= widget.maxBathsLimit;
+    final bool isWarning = widget.bathCount >= (widget.maxBathsLimit - 2).clamp(2, 8) && widget.bathCount < widget.maxBathsLimit;
 
     return Container(
       width: 230,
@@ -144,7 +146,7 @@ class _FryingOilVisualizerState extends State<FryingOilVisualizer>
                         );
                       },
                       child: Text(
-                        '${widget.bathCount} / 10',
+                        '${widget.bathCount} / ${widget.maxBathsLimit}',
                         key: ValueKey<int>(widget.bathCount),
                         style: TextStyle(
                           fontSize: 28,

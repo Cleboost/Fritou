@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fritou/models/bath_entry.dart';
 import 'package:fritou/screens/fryer_screen.dart';
 import 'package:fritou/screens/recipes_screen.dart';
+import 'package:fritou/screens/settings_screen.dart';
 import 'package:fritou/widgets/emoji_explosion_overlay.dart';
 
 class MainNavigationScreen extends StatefulWidget {
@@ -20,6 +21,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   List<BathEntry> _bathHistory = [];
   bool _isLoading = true;
   int _explosionTrigger = 0;
+  bool _emojiExplosionEnabled = true;
+  int _maxBathsLimit = 10;
 
   @override
   void initState() {
@@ -32,6 +35,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       final prefs = await SharedPreferences.getInstance();
       setState(() {
         _bathCount = prefs.getInt('bath_count') ?? 0;
+        _emojiExplosionEnabled = prefs.getBool('emoji_explosion_enabled') ?? true;
+        _maxBathsLimit = prefs.getInt('max_baths_limit') ?? 10;
         final historyString = prefs.getString('bath_history');
         if (historyString != null) {
           final decoded = jsonDecode(historyString) as List;
@@ -53,6 +58,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setInt('bath_count', _bathCount);
+      await prefs.setBool('emoji_explosion_enabled', _emojiExplosionEnabled);
+      await prefs.setInt('max_baths_limit', _maxBathsLimit);
       await prefs.setString(
         'bath_history',
         jsonEncode(_bathHistory.map((e) => e.toJson()).toList()),
@@ -63,7 +70,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   }
 
   void _addBath() {
-    if (_bathCount >= 10) {
+    if (_bathCount >= _maxBathsLimit) {
       _showToxicAlert();
       return;
     }
@@ -90,6 +97,20 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     _saveState();
 
     HapticFeedback.mediumImpact();
+  }
+
+  void _toggleEmojiExplosion(bool value) {
+    setState(() {
+      _emojiExplosionEnabled = value;
+    });
+    _saveState();
+  }
+
+  void _changeMaxBathsLimit(int value) {
+    setState(() {
+      _maxBathsLimit = value;
+    });
+    _saveState();
   }
 
   void _resetFryer() {
@@ -159,9 +180,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             const Text('HUILE TOXIQUE !', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
           ],
         ),
-        content: const Text(
-          'Vous avez atteint la limite critique de 10 bains de friture. Chauffer cette huile produit des composés toxiques nocifs pour la santé.\n\nVous devez impérativement vidanger l\'huile avant de relancer une friture ! 💀',
-          style: TextStyle(height: 1.5, color: Colors.white70),
+        content: Text(
+          'Vous avez atteint la limite critique de $_maxBathsLimit bains de friture. Chauffer cette huile produit des composés toxiques nocifs pour la santé.\n\nVous devez impérativement vidanger l\'huile avant de relancer une friture ! 💀',
+          style: const TextStyle(height: 1.5, color: Colors.white70),
         ),
         actions: [
           TextButton(
@@ -185,6 +206,12 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   }
 
   String _getSuccessMessage() {
+    if (_bathCount == _maxBathsLimit) {
+      return '⚠️ Bain #$_maxBathsLimit : LIMITE ATTEINTE ! HUILE À CHANGER !';
+    }
+    if (_bathCount == _maxBathsLimit - 1) {
+      return '🚨 Bain #$_maxBathsLimit : Dernier bain recommandé !';
+    }
     switch (_bathCount) {
       case 1:
         return 'Premier bain croustillant lancé !';
@@ -192,22 +219,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         return 'Deuxième bain, ça chauffe dur !';
       case 3:
         return 'L\'huile est à point pour de super frites !';
-      case 4:
-        return 'Bain #4 : Miam, quelle belle couleur !';
-      case 5:
-        return 'À mi-chemin ! L\'huile est encore bonne.';
-      case 6:
-        return 'Bain #6 : Ça commence à dorer fort !';
-      case 7:
-        return 'Bain #7 : L\'huile se fatigue un peu.';
-      case 8:
-        return 'Bain #8 : Attention, l\'huile commence à brunir !';
-      case 9:
-        return '🚨 Bain #9 : Dernier bain recommandé !';
-      case 10:
-        return '⚠️ Bain #10 : LIMITE ATTEINTE ! HUILE À CHANGER !';
       default:
-        return 'Bain ajouté !';
+        return 'Bain #$_bathCount : Miam, quelle belle couleur !';
     }
   }
 
@@ -237,12 +250,20 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         onAddBath: _addBath,
         onResetFryer: _resetFryer,
         oilColor: _getOilColor(),
+        maxBathsLimit: _maxBathsLimit,
       ),
       const RecipesScreen(),
+      SettingsScreen(
+        emojiExplosionEnabled: _emojiExplosionEnabled,
+        onToggleEmojiExplosion: _toggleEmojiExplosion,
+        maxBathsLimit: _maxBathsLimit,
+        onMaxBathsLimitChanged: _changeMaxBathsLimit,
+      ),
     ];
 
     return EmojiExplosionOverlay(
       triggerCount: _explosionTrigger,
+      enabled: _emojiExplosionEnabled,
       child: Scaffold(
         body: AnimatedSwitcher(
           duration: const Duration(milliseconds: 300),
@@ -305,6 +326,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                   icon: Icon(Icons.menu_book_outlined),
                   selectedIcon: Icon(Icons.menu_book),
                   label: 'Recettes',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.settings_outlined),
+                  selectedIcon: Icon(Icons.settings),
+                  label: 'Paramètres',
                 ),
               ],
             ),

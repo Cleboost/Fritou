@@ -33,11 +33,13 @@ class EmojiParticle {
 class EmojiExplosionOverlay extends StatefulWidget {
   final int triggerCount;
   final Widget child;
+  final bool enabled;
 
   const EmojiExplosionOverlay({
     super.key,
     required this.triggerCount,
     required this.child,
+    this.enabled = true,
   });
 
   @override
@@ -78,7 +80,7 @@ class _EmojiExplosionOverlayState extends State<EmojiExplosionOverlay>
   @override
   void didUpdateWidget(covariant EmojiExplosionOverlay oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.triggerCount > oldWidget.triggerCount) {
+    if (widget.triggerCount > oldWidget.triggerCount && widget.enabled) {
       _spawnExplosion();
     }
   }

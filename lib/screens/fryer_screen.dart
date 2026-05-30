@@ -8,6 +8,7 @@ class FryerScreen extends StatelessWidget {
   final VoidCallback onAddBath;
   final VoidCallback onResetFryer;
   final Color oilColor;
+  final int maxBathsLimit;
 
   const FryerScreen({
     super.key,
@@ -16,31 +17,30 @@ class FryerScreen extends StatelessWidget {
     required this.onAddBath,
     required this.onResetFryer,
     required this.oilColor,
+    required this.maxBathsLimit,
   });
 
   String _getHeadline() {
     if (bathCount == 0) return "Friteuse Propre";
-    if (bathCount <= 3) return "Qualité Parfaite";
-    if (bathCount <= 6) return "Bonne Friture";
-    if (bathCount <= 8) return "Huile Fatiguée";
-    if (bathCount == 9) return "Dernier Bain !";
+    if (bathCount < (maxBathsLimit / 2)) return "Qualité Parfaite";
+    if (bathCount < maxBathsLimit - 1) return "Bonne Friture";
+    if (bathCount < maxBathsLimit) return "Dernier Bain !";
     return "TOXIQUE - STOP";
   }
 
   String _getSubline() {
     if (bathCount == 0) return "Prête pour croustiller ! ✨";
-    if (bathCount <= 3) return "L'huile est super dorée. 🍟";
-    if (bathCount <= 6) return "Les frites seront succulentes. 🍗";
-    if (bathCount <= 8) return "L'huile commence à fatiguer... ⚠️";
-    if (bathCount == 9) return "Vidangez bientôt. 🚨";
+    if (bathCount < (maxBathsLimit / 2)) return "L'huile est super dorée. 🍟";
+    if (bathCount < maxBathsLimit - 1) return "Les frites seront succulentes. 🍗";
+    if (bathCount < maxBathsLimit) return "Vidangez bientôt. 🚨";
     return "Ne mangez surtout pas ça ! 💀";
   }
 
   @override
   Widget build(BuildContext context) {
-    final double toxicPercent = (bathCount / 10.0).clamp(0.0, 1.0);
-    final bool isToxic = bathCount >= 10;
-    final bool isWarning = bathCount >= 8 && bathCount < 10;
+    final double toxicPercent = (bathCount / maxBathsLimit.toDouble()).clamp(0.0, 1.0);
+    final bool isToxic = bathCount >= maxBathsLimit;
+    final bool isWarning = bathCount >= (maxBathsLimit - 2).clamp(2, 8) && bathCount < maxBathsLimit;
 
     return Scaffold(
       appBar: AppBar(
@@ -73,6 +73,7 @@ class FryerScreen extends StatelessWidget {
                 child: FryingOilVisualizer(
                   bathCount: bathCount,
                   oilColor: oilColor,
+                  maxBathsLimit: maxBathsLimit,
                 ),
               ),
               const SizedBox(height: 20),
