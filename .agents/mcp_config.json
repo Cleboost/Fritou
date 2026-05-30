@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "codegraph": {
+      "args": [
+        "serve",
+        "--mcp",
+        "--path",
+        "/home/cleboost/Code/Fritou"
+      ],
+      "command": "/usr/bin/codegraph"
+    }
+  }
+}
