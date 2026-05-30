@@ -65,7 +65,7 @@ class SettingsScreen extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text(
-                            'Fritou App v1.0.0',
+                            'Fritou App v2.0.0',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
