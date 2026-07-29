@@ -4,12 +4,14 @@ import 'package:fritou/data/recipes_data.dart';
 
 class RecipeDetailSheet extends StatelessWidget {
   final Recipe recipe;
+  final ScrollController? scrollController;
 
   static const MethodChannel _channel = MethodChannel('com.example.fritou/timer');
 
   const RecipeDetailSheet({
     super.key,
     required this.recipe,
+    this.scrollController,
   });
 
   static void show(BuildContext context, Recipe recipe) {
@@ -27,7 +29,10 @@ class RecipeDetailSheet extends StatelessWidget {
           maxChildSize: 0.95,
           expand: false,
           builder: (context, scrollController) {
-            return RecipeDetailSheet(recipe: recipe);
+            return RecipeDetailSheet(
+              recipe: recipe,
+              scrollController: scrollController,
+            );
           },
         );
       },
@@ -71,6 +76,7 @@ class RecipeDetailSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
+      controller: scrollController,
       child: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Column(

@@ -1,12 +1,12 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fritou/models/bath_entry.dart';
 import 'package:fritou/models/oil_type.dart';
 import 'package:fritou/screens/fryer_screen.dart';
 import 'package:fritou/screens/recipes_screen.dart';
 import 'package:fritou/screens/settings_screen.dart';
+import 'package:fritou/services/fryer_preferences_service.dart';
+import 'package:fritou/services/fryer_state.dart';
 import 'package:fritou/widgets/emoji_explosion_overlay.dart';
 
 class MainNavigationScreen extends StatefulWidget {
@@ -17,14 +17,18 @@ class MainNavigationScreen extends StatefulWidget {
 }
 
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
+  final FryerPreferencesService _preferencesService = FryerPreferencesService();
+
   int _currentIndex = 0;
-  int _bathCount = 0;
-  List<BathEntry> _bathHistory = [];
+  FryerState _fryerState = FryerState.initial;
   bool _isLoading = true;
   int _explosionTrigger = 0;
-  bool _emojiExplosionEnabled = true;
-  int _maxBathsLimit = 10;
-  String _selectedOilName = 'Blanc de bœuf';
+
+  int get _bathCount => _fryerState.bathCount;
+  List<BathEntry> get _bathHistory => _fryerState.bathHistory;
+  bool get _emojiExplosionEnabled => _fryerState.emojiExplosionEnabled;
+  int get _maxBathsLimit => _fryerState.maxBathsLimit;
+  String get _selectedOilName => _fryerState.selectedOilName;
 
   @override
   void initState() {
@@ -33,44 +37,23 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   }
 
   Future<void> _loadState() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      setState(() {
-        _bathCount = prefs.getInt('bath_count') ?? 0;
-        _emojiExplosionEnabled = prefs.getBool('emoji_explosion_enabled') ?? true;
-        _maxBathsLimit = prefs.getInt('max_baths_limit') ?? 10;
-        _selectedOilName = prefs.getString('selected_oil_name') ?? 'Blanc de bœuf';
-        final historyString = prefs.getString('bath_history');
-        if (historyString != null) {
-          final decoded = jsonDecode(historyString) as List;
-          _bathHistory = decoded
-              .map((e) => BathEntry.fromJson(Map<String, dynamic>.from(e)))
-              .toList();
-        }
-        _isLoading = false;
-      });
-    } catch (e) {
-      debugPrint("Error loading state: $e");
-      setState(() {
-        _isLoading = false;
-      });
-    }
+    final state = await _preferencesService.load();
+    if (!mounted) return;
+    setState(() {
+      _fryerState = state;
+      _isLoading = false;
+    });
   }
 
   Future<void> _saveState() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setInt('bath_count', _bathCount);
-      await prefs.setBool('emoji_explosion_enabled', _emojiExplosionEnabled);
-      await prefs.setInt('max_baths_limit', _maxBathsLimit);
-      await prefs.setString('selected_oil_name', _selectedOilName);
-      await prefs.setString(
-        'bath_history',
-        jsonEncode(_bathHistory.map((e) => e.toJson()).toList()),
-      );
-    } catch (e) {
-      debugPrint("Error saving state: $e");
-    }
+    await _preferencesService.save(_fryerState);
+  }
+
+  void _updateFryerState(FryerState Function(FryerState current) update) {
+    setState(() {
+      _fryerState = update(_fryerState);
+    });
+    _saveState();
   }
 
   void _addBath() {
@@ -79,54 +62,53 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       return;
     }
 
-    setState(() {
-      _bathCount++;
-      final now = DateTime.now();
-      final day = now.day.toString().padLeft(2, '0');
-      final month = now.month.toString().padLeft(2, '0');
-      final hour = now.hour.toString().padLeft(2, '0');
-      final minute = now.minute.toString().padLeft(2, '0');
-      final dateStr = "$day/$month/${now.year} à ${hour}h$minute";
+    final now = DateTime.now();
+    final day = now.day.toString().padLeft(2, '0');
+    final month = now.month.toString().padLeft(2, '0');
+    final hour = now.hour.toString().padLeft(2, '0');
+    final minute = now.minute.toString().padLeft(2, '0');
+    final dateStr = '$day/$month/${now.year} à ${hour}h$minute';
+    final newBathCount = _bathCount + 1;
 
-      _bathHistory.insert(
-        0,
-        BathEntry(
-          id: DateTime.now().millisecondsSinceEpoch.toString(),
-          index: _bathCount,
-          date: dateStr,
-        ),
+    _updateFryerState((current) {
+      return current.copyWith(
+        bathCount: newBathCount,
+        bathHistory: [
+          BathEntry(
+            id: now.millisecondsSinceEpoch.toString(),
+            index: newBathCount,
+            date: dateStr,
+          ),
+          ...current.bathHistory,
+        ],
       );
+    });
+    setState(() {
       _explosionTrigger++;
     });
-    _saveState();
 
     HapticFeedback.mediumImpact();
   }
 
   void _toggleEmojiExplosion(bool value) {
-    setState(() {
-      _emojiExplosionEnabled = value;
-    });
-    _saveState();
+    _updateFryerState((current) => current.copyWith(emojiExplosionEnabled: value));
   }
 
   void _changeMaxBathsLimit(int value) {
-    setState(() {
-      _maxBathsLimit = value;
-    });
-    _saveState();
+    _updateFryerState((current) => current.copyWith(maxBathsLimit: value));
   }
 
   void _changeOilName(String name) {
-    setState(() {
-      _selectedOilName = name;
-      final oil = availableOils.firstWhere(
-        (o) => o.name == name,
-        orElse: () => availableOils.first,
-      );
-      _maxBathsLimit = oil.defaultMaxBaths;
-    });
-    _saveState();
+    final oil = availableOils.firstWhere(
+      (o) => o.name == name,
+      orElse: () => availableOils.first,
+    );
+    _updateFryerState(
+      (current) => current.copyWith(
+        selectedOilName: name,
+        maxBathsLimit: oil.defaultMaxBaths,
+      ),
+    );
   }
 
   void _resetFryer() {
@@ -157,11 +139,12 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             onPressed: () {
               final messenger = ScaffoldMessenger.of(context);
               Navigator.of(context).pop();
-              setState(() {
-                _bathCount = 0;
-                _bathHistory.clear();
-              });
-              _saveState();
+              _updateFryerState(
+                (current) => current.copyWith(
+                  bathCount: 0,
+                  bathHistory: const [],
+                ),
+              );
               HapticFeedback.heavyImpact();
               messenger.clearSnackBars();
               messenger.showSnackBar(
@@ -219,25 +202,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         ],
       ),
     );
-  }
-
-  String _getSuccessMessage() {
-    if (_bathCount == _maxBathsLimit) {
-      return '⚠️ Bain #$_maxBathsLimit : LIMITE ATTEINTE ! HUILE À CHANGER !';
-    }
-    if (_bathCount == _maxBathsLimit - 1) {
-      return '🚨 Bain #$_maxBathsLimit : Dernier bain recommandé !';
-    }
-    switch (_bathCount) {
-      case 1:
-        return 'Premier bain croustillant lancé !';
-      case 2:
-        return 'Deuxième bain, ça chauffe dur !';
-      case 3:
-        return 'L\'huile est à point pour de super frites !';
-      default:
-        return 'Bain #$_bathCount : Miam, quelle belle couleur !';
-    }
   }
 
   Color _getOilColor() {
